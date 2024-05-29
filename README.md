@@ -24,3 +24,7 @@ Greedy Best First Search
 Inspiration:
 
 https://github.com/imadtoubal/Infinit-Pacman-with-JavaScript
+
+Algoritme:
+
+https://www.geeksforgeeks.org/a-search-algorithm/
