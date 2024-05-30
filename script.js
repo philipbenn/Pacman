@@ -11,7 +11,7 @@ function start() {
 //region controller
 let gridwidth;
 let gridheight;
-let Position = {x: 0, y: 0};
+let position = {x: 0, y: 0};
 
 function setupGame(){
     gridwidth = 15;
@@ -21,7 +21,7 @@ function setupGame(){
 
     document.addEventListener("keydown", keyDown)
 
-    writeToCell(Position.y, Position.x, 1);
+    writeToCell(position.y, position.x, 1);
 
     startGame();
 
@@ -35,36 +35,36 @@ function startGame(){
 function tick(){
     const run = setTimeout(tick, 500)
 
-    writeToCell(Position.y, Position.x, 0);
+    writeToCell(position.y, position.x, 0);
 
 
     if(controls.left){
-        if(canMoveTo(Position.y, Position.x - 1)){
+        if(canMoveTo(position.y, position.x - 1)){
         direction = "left";
         }
     } else if(controls.right){
-        if(canMoveTo(Position.y, Position.x + 1)){
+        if(canMoveTo(position.y, position.x + 1)){
         direction = "right";
         }
     } else if(controls.up){
-        if(canMoveTo(Position.y - 1, Position.x)){
+        if(canMoveTo(position.y - 1, position.x)){
         direction = "up";
         }
     } else if(controls.down){
-        if(canMoveTo(Position.y + 1, Position.x)){
+        if(canMoveTo(position.y + 1, position.x)){
         direction = "down";
         }
     }
-    //console.log(Position.x, Position.y)
-    let nextPos = {x: Position.x, y: Position.y};
+    //console.log(position.x, position.y)
+    let nextPos = {x: position.x, y: position.y};
     nextPos = move(direction, nextPos);
     
     if(canMoveTo(nextPos.y, nextPos.x)){
-    Position = nextPos;
+    position = nextPos;
     }
     
 
-    writeToCell(Position.y, Position.x, 1);
+    writeToCell(position.y, position.x, 1);
 
 
     displayModel();
