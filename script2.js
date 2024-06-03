@@ -23,7 +23,7 @@ function tick(timestamp){
   const deltatime = (timestamp - lastTimestamp) / 1000;
   lastTimestamp = timestamp;
 
-  movePlayer(deltatime);
+  movePlayerv2(deltatime);
 
   displayPlayerposition();
   //showDebugging();
@@ -58,12 +58,14 @@ function keyPress(event) {
 }
 
 
+
 //#endregion CONTROLLER
 
 //#region MODEL */
 
 function movePlayer(deltatime){
     pacman.moving = false;
+    let tempDirection = pacman.direction;
     const newPos = {
         x: pacman.x,
         y: pacman.y
@@ -71,22 +73,22 @@ function movePlayer(deltatime){
 
     if(controls.up){
         pacman.moving = true;
-        pacman.direction = "up";
+        tempDirection = "up";
         pacman.speed = pacman.topspeed;
     }
     if(controls.down){
         pacman.moving = true;
-        pacman.direction = "down";
+        tempDirection = "down";
         pacman.speed = pacman.topspeed;
     }
     if(controls.left){
         pacman.moving = true;
-        pacman.direction = "left";
+        tempDirection = "left";
         pacman.speed = pacman.topspeed;
     }
     if(controls.right){
         pacman.moving = true;
-        pacman.direction = "right";
+        tempDirection = "right";
         pacman.speed = pacman.topspeed;
     }
 
@@ -105,15 +107,90 @@ function movePlayer(deltatime){
       }
     }
 
+    const tempPos = {x: newPos.x *2, y: newPos.y *2};
+
     if(canMoveToMore(newPos)){
         pacman.x = newPos.x;
         pacman.y = newPos.y;
         checkForItems();
+        pacman.direction = tempDirection
     } else {
         pacman.moving = false;
     }
     
     
+}
+
+function movePlayerv2(deltatime){
+  pacman.moving = false;
+    let tempDirection = pacman.direction;
+    
+    
+
+    const newPos = {
+      x: pacman.x,
+      y: pacman.y
+    }
+
+    if(controls.up){
+        pacman.moving = true;
+        tempDirection = "up";
+        pacman.speed = pacman.topspeed;
+    }
+    if(controls.down){
+        pacman.moving = true;
+        tempDirection = "down";
+        pacman.speed = pacman.topspeed;
+    }
+    if(controls.left){
+        pacman.moving = true;
+        tempDirection = "left";
+        pacman.speed = pacman.topspeed;
+    }
+    if(controls.right){
+        pacman.moving = true;
+        tempDirection = "right";
+        pacman.speed = pacman.topspeed;
+    }
+
+    const posToCheck = getCheckPos({x: pacman.x, y: pacman.y}, tempDirection);
+    
+    if(canMoveTo(posToCheck)){
+      if(pacman.speed > 0){
+        if(controls.up){
+          newPos.y -= pacman.speed * deltatime;
+        }
+        if(controls.down){
+          newPos.y += pacman.speed * deltatime;
+        }
+        if(controls.left){
+          newPos.x -= pacman.speed * deltatime;
+        }
+        if(controls.right){
+          newPos.x += pacman.speed * deltatime;
+        }
+      }
+    } else {
+      pacman.moving = false;
+    }
+    
+}
+
+function getCheckPos(oldPos, tempDirection){
+  let newCol = coordFromPos(oldPos).col;
+  let newRow = coordFromPos(oldPos).row;
+
+  if(tempDirection === "up"){
+    newRow--;
+  } else if(tempDirection === "down"){
+    newRow++;
+  } else if(tempDirection === "left"){
+    newCol--;
+  } else if(tempDirection === "right"){
+    newCol++;
+  }
+  
+  return posFromCoord({row: newRow, col: newCol});
 }
 
 function canMoveTo(pos){
@@ -219,10 +296,10 @@ const pacman = {
     regX: 16,
     regY: 16,
     hitbox: {
-      x: 1,
-      y: 1,
-      w: 31,
-      h: 31
+      x: 2,
+      y: 2,
+      w: 30,
+      h: 30
     },
     speed: 100,
     topspeed: 150,
@@ -238,7 +315,7 @@ const controls = {
     use: false
 }
 
-const tiles = [
+/* const tiles = [
     [0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 3, 0, 1, 0, 1, 0, 0, 0, 0, 3],
     [0, 0, 0, 3, 1, 1, 1, 0, 1, 0, 3, 0, 0, 0, 1, 1, 1, 0, 1, 3],
     [0, 0, 0, 3, 0, 0, 1, 0, 1, 0, 3, 0, 0, 0, 0, 2, 1, 0, 1, 3],
@@ -259,7 +336,21 @@ const tiles = [
     [3, 3, 1, 0, 0, 0, 0, 3, 3, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
     [1, 3, 1, 1, 1, 0, 1, 1, 3, 0, 1, 0, 1, 1, 1, 0, 1, 1, 3, 3],
     [1, 3, 3, 3, 3, 0, 0, 0, 3, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1],
-]
+] */
+
+const tiles = [
+  [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+  [1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
+  [1, 3, 1, 2, 0, 1, 3, 1, 2, 0, 0, 1, 3, 1, 0, 2, 0, 1, 3, 1],
+  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
+  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
+  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
+  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
+  [1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
+  [1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+];
 
 const GRID_width = tiles[0].length;
 const GRID_height = tiles.length;
@@ -299,10 +390,10 @@ function getTilesUnderPLayer(pacman){
 function getPosForPlayer(pos){
   const positions = [];
 
-  const topLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y};
-  const topRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y};
-  const bottomLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y + pacman.hitbox.h};
-  const bottomRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y + pacman.hitbox.h};
+  const topLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y - 16};
+  const topRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y - 16};
+  const bottomLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y + pacman.hitbox.h - 16};
+  const bottomRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y + pacman.hitbox.h - 16};
 
   positions.push(topLeft);
   positions.push(topRight);
@@ -471,6 +562,7 @@ function showDebugging(){
     const visualTile = visualTiles[coord.row * GRID_width + coord.col];
     visualTile.classList.remove("highlight");
   }
+
   
   //#endregion DEBUGGING
 
