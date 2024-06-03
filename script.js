@@ -14,8 +14,8 @@ let gridheight;
 let position = {x: 0, y: 0};
 
 function setupGame(){
-    gridwidth = 15;
-    gridheight = 10;
+    gridwidth = 10;
+    gridheight = 6;
     createModel();
     createView();
 
@@ -168,7 +168,6 @@ let controls = {
 }
 
 function createModel(){
-    model = [];
     for(let row = 0; row < gridheight; row++){
         const rowArray = [];
         for(let col = 0; col < gridwidth; col++){
