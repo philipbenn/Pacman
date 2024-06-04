@@ -158,6 +158,7 @@ let model = [
 [5,0,0,0,0,4,0,0,0,5]
 ];
 
+
 let direction = "right";
 
 let controls = {
@@ -184,6 +185,7 @@ function writeToCell(row, col, value){
 function readFromCell(row, col){
     return model[row][col];
 }
+
 
 //endregion
 
