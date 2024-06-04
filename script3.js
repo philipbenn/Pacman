@@ -6,46 +6,77 @@ function start() {
   console.log("start");
 
   addEventListeners();
-  createTiles();
-  displayTiles();
-  displayEntityPosition(pacman);
-  displayPlayerposition();
-  //requestAnimationFrame(tick);
-}
-
-function displayPlayerposition(){
-  const visualPlayer = document.querySelector("#pacman");
-  console.log(visualPlayer)
-  visualPlayer.style.translate = `${pacman.x - pacman.regX}px ${pacman.y - pacman.regY}px`;
+  createGrid();
+  displayGrid();
+  requestAnimationFrame(tick);
 }
 
 //#region Controller
+const updateInterval = 200;
 let lastTimestamp = 0;
 function tick(timestamp) {
+  if(timestamp - lastTimestamp > updateInterval){
+    moveObject(pacman)
+    displayEntityPosition(pacman);
+    lastTimestamp = timestamp;
+  }
   requestAnimationFrame(tick);
-
-  const delta = (timestamp - lastTimestamp) / 1000;
-  lastTimestamp = timestamp;
-
-  moveObject(pacman, delta);
-
-  displayEntityPosition(pacman);
 }
 
 //#region movement
-function moveObject(entity, delta) {}
+let lastDirection = "down";
+function moveObject(entity) {
+  let tempDirection = getDirection(getDirectionFromControls());
 
-function getDirection() {
-  if (controls.up) {
-    return "up";
-  } else if (controls.down) {
-    return "down";
-  } else if (controls.left) {
-    return "left";
-  } else if (controls.right) {
-    return "right";
+  let newPos = { x: entity.x, y: entity.y };
+  newPos.x += tempDirection.x
+  newPos.y += tempDirection.y
+
+  
+  if (canMoveTo(newPos)) {
+  entity.x = newPos.x;
+  entity.y = newPos.y;
+  lastDirection = getDirectionFromControls();
+  } else {
+    tempDirection = getDirection(lastDirection);
+    newPos = { x: entity.x, y: entity.y };
+    newPos.x += tempDirection.x;
+    newPos.y += tempDirection.y;
+    if(canMoveTo(newPos)){
+      entity.x = newPos.x;
+      entity.y = newPos.y;
+    }
   }
 }
+
+function canMoveTo(pos){
+  if(pos.x < 0 || pos.x > GRID_width - 1 || pos.y < 0 || pos.y > GRID_height - 1){
+    return false;
+  }
+  if(getTileAtCoord({row: pos.y, col: pos.x}) === 1){
+    return false;
+  }
+  return true;
+
+}
+
+function getDirection(direction) {
+  if (direction === "up") {
+    let temp = { x: 0, y: -1 };
+    return temp;
+  } else if (direction === "down") {
+    let temp = { x: 0, y: 1 };
+    return temp;
+  } else if (direction === "left") {
+    let temp = { x: -1, y: 0 };
+    return temp;
+  } else if (direction === "right") {
+    let temp = { x: 1, y: 0 };
+    return temp;
+  }
+  return { x: 0, y: 0 };
+}
+
 //#endregion
 
 //#endregion
@@ -55,12 +86,8 @@ function getDirection() {
 //#region pacman
 const pacman = {
   name: "pacman",
-  x: 100,
-  y: 100,
-  regX: 16,
-  regY: 16,
-  speed: 100,
-  topspeed: 150,
+  x: 0,
+  y: 0,
   moving: false,
   direction: undefined,
 };
@@ -85,50 +112,38 @@ const GRID_width = tiles[0].length;
 const GRID_height = tiles.length;
 const tile_size = 32;
 
+//make the array into a graphs
+
+
 //#endregion
 //#endregion
 
 //#region View
-function createTiles() {
-  const gameField = document.querySelector("#gamefield");
-
-  const background = document.querySelector("#background");
-
-  for (let row = 0; row < GRID_height; row++) {
-    for (let col = 0; col < GRID_width; col++) {
-      const tile = document.createElement("div");
-      tile.classList.add("tile");
-
-      background.append(tile);
+function createGrid(){
+  const board = document.querySelector("#gameBoard");
+  board.style.setProperty("--GRID_WIDTH", GRID_width);
+  for(let row = 0; row < GRID_height; row++){
+    for(let col = 0; col < GRID_width; col++){
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      board.append(cell);
     }
   }
-  background.style.setProperty("--GRID_WIDTH", GRID_width);
-  background.style.setProperty("--GRID_HEIGHT", GRID_height);
-  background.style.setProperty("--TILE_SIZE", tile_size + "px");
-
-  gameField.style.setProperty("--GRID_WIDTH", GRID_width);
-  gameField.style.setProperty("--GRID_HEIGHT", GRID_height);
-  gameField.style.setProperty("--TILE_SIZE", tile_size + "px");
 }
 
-function displayTiles() {
-  const visualTiles = document.querySelectorAll("#background .tile");
-
-  for (let row = 0; row < GRID_height; row++) {
-    for (let col = 0; col < GRID_width; col++) {
-      const tile = getTileAtCoord({ row, col });
-      const visualTile = visualTiles[row * GRID_width + col];
-
-      visualTile.classList.add(getClassForTileType(tile));
-    }
-  }
+function displayGrid(){
+  const cells = document.querySelectorAll("#gameBoard .cell");
+  cells.forEach((cell, index) => {
+    const row = Math.floor(index / GRID_width);
+    const col = index % GRID_width;
+    const tile = getTileAtCoord({row, col});
+    cell.classList.add(getClassForTileType(tile));
+  });
 }
 
 function displayEntityPosition(entity) {
-  const visualEntity = document.querySelector(`#${entity.name}`);
-  console.log(visualEntity);
-  console.log(entity.x)
-  visualEntity.style.translate = `${entity.x - entity.regX}px ${entity.y - entity.rexY}px)`;
+  const visualPlayer = document.querySelector(`#${entity.name}`);
+  visualPlayer.style.transform = `translate(${entity.x * tile_size}px, ${entity.y * tile_size}px)`;
 }
 //#endregion
 
@@ -156,9 +171,24 @@ const controls = {
   left: false,
   right: false,
 };
+
+function getDirectionFromControls() {
+  if (controls.up) {
+    return "up";
+  } else if (controls.down) {
+    return "down";
+  } else if (controls.left) {
+    return "left";
+  } else if (controls.right) {
+    return "right";
+  }
+  return undefined;
+
+}
 //#endregion
 
 //#region Debugging
+
 //#endregion
 
 //#region Eventlisteners

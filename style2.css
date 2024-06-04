@@ -7,40 +7,16 @@ body {
   color: #efef73;
 }
 
-#gamefield{
-border: 1px solid darkblue;
-border-radius: 5px;
-width: -moz-fit-content;
-width: fit-content;
-display: grid;
-grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
-
-}
-
-#background{
-grid-area: 1 / 1;
-display: grid;
-grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
-}
-
-#background .tile{
-width: var(--TILE_SIZE);
-aspect-ratio: 1 / 1;
-
-background-repeat: no-repeat;
-background-size: 100%;
-image-rendering: pixelated;
-
+#gameBoard{
+    display: grid;
+    grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
+    width: fit-content
 }
 
 .cell {
   width: 32px;
   aspect-ratio: 1 / 1;
-  border: 2px solid gray;
-}
-
-#characters{
-  grid-area: 1 / 1;
+  background-color: #777;
 }
 
 #ghosts .ghost {
@@ -53,13 +29,13 @@ image-rendering: pixelated;
 }
 
 #pacman {
-width: 32px !important; /* Width of one frame */
-height: 32px !important; /* Height of one frame */
+width: 32px; /* Width of one frame */
+height: 32px; /* Height of one frame */
 background: url('images/pacman.gif');
 background-size: 128px 32px; /* Total width and height of the sprite sheet */
 image-rendering: pixelated;
-transition: transform 0.1s;
-animation: pacman-animation 0.5s steps(4) infinite;
+position: absolute;
+transition: transform 0.2s linear;
 }
 
 @keyframes pacman-animation {
@@ -154,19 +130,6 @@ input[type="number"]:focus {
   color: white;
   border: none;
   border-radius: 5px;
-}
-
-.east {
-  border-right-color: transparent;
-}
-.west {
-  border-left-color: transparent;
-}
-.north {
-  border-top-color: transparent;
-}
-.south {
-  border-bottom-color: transparent;
 }
 
 /* Debugging */
