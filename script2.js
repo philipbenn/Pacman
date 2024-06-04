@@ -23,10 +23,10 @@ function tick(timestamp){
   const deltatime = (timestamp - lastTimestamp) / 1000;
   lastTimestamp = timestamp;
 
-  movePlayerv2(deltatime);
+  movePlayer(deltatime);
 
   displayPlayerposition();
-  //showDebugging();
+  showDebugging();
 }
 
 function keyPress(event) {
@@ -243,7 +243,7 @@ function canMoveToMore(pos){
 
 function spawnGhosts() {
   const ghostContainer = document.querySelector("#ghosts");
-  const numberOfGhosts = 2; // Adjust the number of ghosts to spawn
+  const numberOfGhosts = 1; // Adjust the number of ghosts to spawn
   const ghostColors = 10; // Total number of ghost colors in the sprite sheet
   const frameHeight = 32; // Height of each ghost frame
 
@@ -296,8 +296,8 @@ const pacman = {
     regX: 16,
     regY: 16,
     hitbox: {
-      x: 2,
-      y: 2,
+      x: 1,
+      y: 1,
       w: 30,
       h: 30
     },
@@ -390,10 +390,10 @@ function getTilesUnderPLayer(pacman){
 function getPosForPlayer(pos){
   const positions = [];
 
-  const topLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y - 16};
-  const topRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y - 16};
-  const bottomLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y + pacman.hitbox.h - 16};
-  const bottomRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y + pacman.hitbox.h - 16};
+  const topLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y - 14};
+  const topRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y - 14};
+  const bottomLeft = {x: pos.x - pacman.regX + pacman.hitbox.x, y: pos.y + pacman.hitbox.h - 14};
+  const bottomRight = {x: pos.x - pacman.regX + pacman.hitbox.x + pacman.hitbox.w, y: pos.y + pacman.hitbox.h - 14};
 
   positions.push(topLeft);
   positions.push(topRight);
