@@ -166,9 +166,9 @@ function canMoveToMore(pos){
 
 function spawnGhosts() {
   const ghostContainer = document.querySelector("#ghosts");
-  const numberOfGhosts = 2; // Adjust the number of ghosts to spawn
-  const ghostColors = 10; // Total number of ghost colors in the sprite sheet
-  const frameHeight = 32; // Height of each ghost frame
+  const numberOfGhosts = 2; // Ghost spanwn count
+  const ghostColors = 10; // Number of ghosts vertically in the sprite sheet
+  const frameHeight = 32; // Ghost height in px
 
   const occupiedPositions = new Set(); // Track occupied positions
 
