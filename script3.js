@@ -8,6 +8,7 @@ function start() {
   addEventListeners();
   createGrid();
   displayGrid();
+  spawnGhosts();
   requestAnimationFrame(tick);
 }
 
@@ -15,18 +16,29 @@ function start() {
 const updateInterval = 200;
 let lastTimestamp = 0;
 function tick(timestamp) {
+
   if(timestamp - lastTimestamp > updateInterval){
     moveObject(pacman)
     displayEntityPosition(pacman);
+    displayEntityAnimation(pacman);
+
+    //moveObject(aStarGhost);
+    displayEntityPosition(aStarGhost);
+    displayEntityPosition(djikstraGhost);
+    displayEntityPosition(gbfsGhost);
+    //displayEntityAnimation(aStarGhost);
     lastTimestamp = timestamp;
   }
+  
+  displayGrid();
   requestAnimationFrame(tick);
 }
 
 //#region movement
-let lastDirection = "down";
+let lastDirection = "right";
 function moveObject(entity) {
-  let tempDirection = getDirection(getDirectionFromControls());
+  let inputDirection = getDirectionFromControls();
+  let tempDirection = getDirection(inputDirection);
 
   let newPos = { x: entity.x, y: entity.y };
   newPos.x += tempDirection.x
@@ -36,15 +48,27 @@ function moveObject(entity) {
   if (canMoveTo(newPos)) {
   entity.x = newPos.x;
   entity.y = newPos.y;
-  lastDirection = getDirectionFromControls();
+  entity.moving = true;
+  entity.direction = inputDirection;
+  if(entity.name === "pacman"){
+    checkForItems(entity.x, entity.y);
+  }
+  lastDirection = inputDirection;
   } else {
     tempDirection = getDirection(lastDirection);
     newPos = { x: entity.x, y: entity.y };
     newPos.x += tempDirection.x;
     newPos.y += tempDirection.y;
     if(canMoveTo(newPos)){
-      entity.x = newPos.x;
+      entity.x = newPos.x;//todo extract method from this as this is a duplicate of the if statement above
       entity.y = newPos.y;
+      entity.moving = true;
+      entity.direction = inputDirection;
+      if(entity.name === "pacman"){
+        checkForItems(entity.x, entity.y);
+      }
+    } else {
+      entity.moving = false;
     }
   }
 }
@@ -77,6 +101,7 @@ function getDirection(direction) {
   return { x: 0, y: 0 };
 }
 
+
 //#endregion
 
 //#endregion
@@ -93,10 +118,55 @@ const pacman = {
 };
 //#endregion
 
+//#region ghost
+const aStarGhost = {
+  name: "aStarGhost",
+  x: 5,
+   y: 5,
+  moving: false,
+  direction: undefined,
+};
+
+const djikstraGhost = {
+  name: "djikstraGhost",
+  x: 3,
+  y: 5, 
+  moving: false,
+  direction: undefined,
+};
+
+const gbfsGhost = {
+  name: "gbfsGhost",
+  x: 5,
+  y: 3,
+  moving: false,
+  direction: undefined,
+};
+
+let ghosts = [aStarGhost, djikstraGhost, gbfsGhost];
+
+function spawnGhosts(){
+  const ghostContainer = document.querySelector("#ghosts");
+  const ghostFrameHeight = 32;
+  const ghostColors = 3;
+  let ghostColorIncrement = 0;
+
+  for(let ghost of ghosts){
+    const visualGhost = document.createElement("div");
+    visualGhost.classList.add("ghost");
+    visualGhost.id = ghost.name;
+    ghostContainer.append(visualGhost);
+    visualGhost.style.backgroundPosition = `0px -${(ghostColorIncrement % ghostColors) * ghostFrameHeight}px`;
+    ghostColorIncrement++;
+  }
+}
+
+//#endregion
+
 //#region level
 const tiles = [
   [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+  [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1],
   [1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
   [1, 3, 1, 2, 0, 1, 3, 1, 2, 0, 0, 1, 3, 1, 0, 2, 0, 1, 3, 1],
   [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
@@ -126,6 +196,8 @@ function createGrid(){
     for(let col = 0; col < GRID_width; col++){
       const cell = document.createElement("div");
       cell.classList.add("cell");
+      cell.dataset.row = row;
+      cell.dataset.col = col;
       board.append(cell);
     }
   }
@@ -144,6 +216,25 @@ function displayGrid(){
 function displayEntityPosition(entity) {
   const visualPlayer = document.querySelector(`#${entity.name}`);
   visualPlayer.style.transform = `translate(${entity.x * tile_size}px, ${entity.y * tile_size}px)`;
+}
+
+function displayEntityAnimation(entity) {
+  const visualPlayer = document.querySelector(`#${entity.name}`);
+  if (entity.direction && !visualPlayer.classList.contains(entity.direction)){
+    visualPlayer.classList.remove("up", "down", "left", "right");
+    visualPlayer.classList.add(`${entity.direction}`);
+    if(!visualPlayer.classList.contains("animateVer") || !visualPlayer.classList.contains("animateHor")){
+      if(entity.direction === "up" || entity.direction === "down"){
+        visualPlayer.classList.remove("animateHor");
+        visualPlayer.classList.add("animateVer");
+      } else {
+        visualPlayer.classList.remove("animateVer");
+        visualPlayer.classList.add("animateHor");
+      }
+    }
+  } 
+
+  
 }
 //#endregion
 
@@ -172,6 +263,27 @@ const controls = {
   right: false,
 };
 
+const aStarControls = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+};
+
+const djikstraControls = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+};
+
+const gbfsControls = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+ }
+
 function getDirectionFromControls() {
   if (controls.up) {
     return "up";
@@ -183,6 +295,29 @@ function getDirectionFromControls() {
     return "right";
   }
   return undefined;
+
+}
+
+function checkForItems(x, y) {
+  const item = getItemFromGrid(x, y);
+
+  if (item === 2) {
+    console.log("coin");
+  }
+  if (item === 3) {
+    console.log("xp");
+  }
+  takeItem(x, y);
+}
+
+function getItemFromGrid(x, y) {
+  return tiles[y][x];
+}
+
+function takeItem(col, row) {
+  const visualItem = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+  visualItem.classList.remove(getClassForTileType(getItemFromGrid(col, row)));
+  tiles[row][col] = 0;
 
 }
 //#endregion
@@ -202,13 +337,13 @@ function keyDown(e) {
   controls.up = false;
   controls.down = false;
 
-  if (e.key === "ArrowUp") {
+  if (e.key === "ArrowUp" || e.key === "w") {
     controls.up = true;
-  } else if (e.key === "ArrowDown") {
+  } else if (e.key === "ArrowDown" || e.key === "s") {
     controls.down = true;
-  } else if (e.key === "ArrowLeft") {
+  } else if (e.key === "ArrowLeft" || e.key === "a") {
     controls.left = true;
-  } else if (e.key === "ArrowRight") {
+  } else if (e.key === "ArrowRight" || e.key === "d") {
     controls.right = true;
   }
 }

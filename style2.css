@@ -16,15 +16,19 @@ body {
 .cell {
   width: 32px;
   aspect-ratio: 1 / 1;
-  background-color: #777;
+  background-color: #000000;
 }
 
-#ghosts .ghost {
+#ghosts{
+  position: absolute;
+}
+
+.ghost {
 width: 32px; /* Width of one frame */
 height: 32px; /* Height of one frame */
+position: absolute;
 background: url('images/ghosts.png');
 background-size: 256px 320px; /* Total width and height of the sprite sheet */
-background-position: 0 0; /* Position of the first ghost in the first state */
 image-rendering: pixelated;
 }
 
@@ -36,6 +40,15 @@ background-size: 128px 32px; /* Total width and height of the sprite sheet */
 image-rendering: pixelated;
 position: absolute;
 transition: transform 0.2s linear;
+background-color: transparent;
+}
+
+#pacman.animateHor{
+  animation: pacman-animation 0.5s steps(4) infinite;
+}
+
+#pacman.animateVer{
+  animation: pacman-animation-horizontal 0.5s steps(4) infinite;
 }
 
 @keyframes pacman-animation {
@@ -47,20 +60,33 @@ to {
 }
 }
 
-.pacman-left {
-transform: rotate(0deg);
+@keyframes pacman-animation-horizontal {
+from {
+  background-position: 0 0;
+}
+to {
+  background-position: 0 -128px; /* Total width of the sprite sheet */
+}
 }
 
-.pacman-up {
-transform: rotate(90deg);
+#pacman.left {
+  background: url('images/pacman.gif');
+  background-size: 128px 32px; /* Total width and height of the sprite sheet */
 }
 
-.pacman-down {
-transform: rotate(270deg);
+#pacman.up {
+  background: url('images/pacman_up.gif');
+  background-size: 32px 128px; /* Total width and height of the sprite sheet */
 }
 
-.pacman-right {
-transform: rotate(180deg);
+#pacman.down {
+  background: url('images/pacman_down.gif');
+  background-size: 32px 128px; /* Total width and height of the sprite sheet */
+}
+
+#pacman.right {
+  background: url('images/pacman_right.gif');
+  background-size: 128px 32px; /* Total width and height of the sprite sheet */
 }
 
 .moving {
