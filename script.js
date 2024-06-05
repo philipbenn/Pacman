@@ -211,6 +211,7 @@ let model = [
 [5,0,0,0,0,4,0,0,0,5]
 ];
 
+
 function gridToGraph(grid) {
     const rows = grid.length;
     const cols = grid[0].length;
@@ -401,6 +402,7 @@ function createMazeBinarySpacePartitioning() {
 
     createRooms(start, end);
 }
+
 
 //endregion
 
