@@ -4,7 +4,7 @@ window.addEventListener("load", start);
 
 function start() {
   console.log("start");
-
+  playSound(startSound);
   addEventListeners();
   createGrid();
   displayGrid();
@@ -15,44 +15,59 @@ function start() {
 //#region Controller
 const updateInterval = 200;
 let lastTimestamp = 0;
+let score = 0;
+
 function tick(timestamp) {
 
   if(timestamp - lastTimestamp > updateInterval){
-    moveObject(pacman)
+    moveObject(pacman, getDirectionFromControls())
     displayEntityPosition(pacman);
     displayEntityAnimation(pacman);
 
     //moveObject(aStarGhost);
+    moveObject(aStarGhost, getDirectionForAStarGhost());
     for(let ghost of ghosts){
       displayEntityPosition(ghost);
-    }
+    } 
     //displayEntityAnimation(aStarGhost);
     lastTimestamp = timestamp;
-  }
 
+  }
   if (powerUpActive) {
-    for(let ghost of ghosts){
+    scatter = true;
+    if (!isPowerUpSoundPlaying) {
+      playPowerUpSound();
+      isPowerUpSoundPlaying = true;
+    }
+    for (let ghost of ghosts) {
       addBlinkingEffect(ghost);
     }
     powerUpDuration--;
     if (powerUpDuration <= 0) {
-      for(let ghost of ghosts){
+      for (let ghost of ghosts) {
         removeBlinkingEffect(ghost);
       }
+      scatter = false;
       powerUpActive = false;
+      stopPowerUpSound();
+      isPowerUpSoundPlaying = false;
     }
+  } else if (isPowerUpSoundPlaying) {
+    stopPowerUpSound();
+    isPowerUpSoundPlaying = false;
   }
-  
+
   displayGrid();
   gameOverCheck();
   requestAnimationFrame(tick);
 }
-
+  
+  
 //#region movement
-let lastDirection = "right";
-function moveObject(entity) {
-  let inputDirection = getDirectionFromControls();
+function moveObject(entity, direction) {
+  let inputDirection = direction
   let tempDirection = getDirection(inputDirection);
+
 
   let newPos = { x: entity.x, y: entity.y };
   newPos.x += tempDirection.x
@@ -67,9 +82,9 @@ function moveObject(entity) {
   if(entity.name === "pacman"){
     checkForItems(entity.x, entity.y);
   }
-  lastDirection = inputDirection;
+  entity.lastDir = inputDirection;
   } else {
-    tempDirection = getDirection(lastDirection);
+    tempDirection = getDirection(entity.lastDir);
     newPos = { x: entity.x, y: entity.y };
     newPos.x += tempDirection.x;
     newPos.y += tempDirection.y;
@@ -128,7 +143,7 @@ function gameOverScreen() {
   gameOverScreen.classList.add("gameOverPopUp");
   gameOverScreen.innerHTML = `
     <h1>Game Over</h1>
-    <button id="restartButton">Restart</button>
+    <button id="restartButton" style="font-family: Silkscreen">Restart</button>
   `;
   document.body.append(gameOverScreen);
 
@@ -152,14 +167,18 @@ let gameOver = false;
 
 function gameOverCheck() {
   for (let ghost of ghosts) {
-    if (powerUpActive && pacman.x === ghost.x && pacman.y === ghost.y) {
+    let collision = collisionCheck(ghost);
+    if (powerUpActive && collision) {
       console.log("Ghost has been Eaten!");
-
+      score += 200;
+      updateScoreDisplay();
+      playSound(eatGhostSound);
       ghosts.splice(ghosts.indexOf(ghost), 1);
       despawnEntity(ghost);
 
-    } else if (!powerUpActive && pacman.x === ghost.x && pacman.y === ghost.y) {
+    } else if (!powerUpActive && collision) {
       if (!gameOver) {
+        playSound(deathSound);
         gameOver = true;
         gameOverScreen();
       }
@@ -170,17 +189,18 @@ function gameOverCheck() {
 
 const pacman = {
   name: "pacman",
-  x: 0,
-  y: 0,
+  x: 18,
+  y: 8,
   moving: false,
   direction: undefined,
+  lastDir: "right",
 };
 let powerUpActive = false;
 let powerUpDuration = 0;
 
 function eatPowerUp(){
   powerUpActive = true;
-  powerUpDuration = 1000;
+  powerUpDuration = 600;
 }
 
 
@@ -189,11 +209,191 @@ function eatPowerUp(){
 //#region ghost
 const aStarGhost = {
   name: "aStarGhost",
-  x: 8,
-   y: 5,
+  x: 1,
+  y: 1,
   moving: false,
   direction: undefined,
+  lastDir: "right",
 };
+
+let scatter = false;
+
+const initialAstarGhost = {x: aStarGhost.x, y: aStarGhost.y};
+
+function moveGhostsToScatter(){
+  if(scatter){
+    for(let ghost of ghosts){
+      moveObject(ghost, getDirectionForScatter(ghost));
+    }
+  }
+}
+
+function getDirectionForScatter(ghost){
+  if(ghost.name === "aStarGhost"){
+    const paths = getAStarPath({row: ghost.y, col: ghost.x}, {row: initialAstarGhost.y, col: initialAstarGhost.x});
+  let path = paths[1];
+  if(paths.length === 1){
+    path = paths[0];
+  }
+  if(path.row > ghost.y){
+    console.log("down")
+    return "down";
+  }
+  if(path.row < ghost.y){
+    console.log("up")
+    return "up";
+  }
+  if(path.col > ghost.x){
+    console.log("right")
+    return "right";
+  }
+  if(path.col < ghost.x){
+    console.log("left")
+    return "left";
+  }
+}
+}
+
+function stopScatter(){
+  
+}
+
+function getDirectionForAStarGhost(){
+  const paths = getAStarPath({row: aStarGhost.y, col: aStarGhost.x}, {row: pacman.y, col: pacman.x});
+  console.log(paths);
+  let path = paths[1];
+  if(paths.length === 1){
+    path = paths[0];
+  }
+  if(path.row > aStarGhost.y){
+    console.log("down")
+    return "down";
+  }
+  if(path.row < aStarGhost.y){
+    console.log("up")
+    return "up";
+  }
+  if(path.col > aStarGhost.x){
+    console.log("right")
+    return "right";
+  }
+  if(path.col < aStarGhost.x){
+    console.log("left")
+    return "left";
+  }
+  
+}
+
+//#region A star
+function getAStarPath(start, goal){
+  return aStar(tiles, start, goal);
+}
+
+function createNode(row, col, walkable) {
+  return {
+      row: row,
+      col: col,
+      walkable: walkable,
+      g: Infinity, // Cost from start to this node
+      h: 0, // Heuristic cost to goal (only for A*)
+      f: Infinity, // Total cost (only for A*)
+      parent: null // To trace the path back
+  };
+}
+
+function buildGraph(grid) {
+  const graph = [];
+  for (let row = 0; row < grid.length; row++) {
+      graph[row] = [];
+      for (let col = 0; col < grid[row].length; col++) {
+          graph[row][col] = createNode(row, col, grid[row][col] !== 1);
+      }
+  }
+  return graph;
+}
+
+function getNeighbors(graph, node) {
+  const neighbors = [];
+  const directions = [
+      { row: -1, col: 0 }, // up
+      { row: 1, col: 0 },  // down
+      { row: 0, col: -1 }, // left
+      { row: 0, col: 1 }   // right
+  ];
+  directions.forEach(dir => {
+      const newRow = node.row + dir.row;
+      const newCol = node.col + dir.col;
+      if (newRow >= 0 && newRow < graph.length && newCol >= 0 && newCol < graph[0].length) {
+          const neighbor = graph[newRow][newCol];
+          if (neighbor.walkable) {
+              neighbors.push(neighbor);
+          }
+      }
+  });
+  return neighbors;
+}
+
+function manhattanDistance(nodeA, nodeB) {
+  return Math.abs(nodeA.row - nodeB.row) + Math.abs(nodeA.col - nodeB.col);
+}
+
+function reconstructPath(node) {
+  const path = [];
+  while (node !== null) {
+      path.push({ row: node.row, col: node.col });
+      node = node.parent;
+  }
+  return path.reverse();
+}
+
+function aStar(grid, startCoord, goalCoord) {
+  const graph = buildGraph(grid);
+  const startNode = graph[startCoord.row][startCoord.col];
+  const goalNode = graph[goalCoord.row][goalCoord.col];
+  const openSet = [];
+  const closedSet = new Set();
+
+  startNode.g = 0;
+  startNode.h = manhattanDistance(startNode, goalNode);
+  startNode.f = startNode.h;
+  openSet.push(startNode);
+
+      
+  while (openSet.length > 0) {
+      // Get the node with the lowest f cost
+      openSet.sort((a, b) => a.f - b.f);
+      const currentNode = openSet.shift();
+
+      if (currentNode === goalNode) {
+          return reconstructPath(currentNode);
+      }
+
+      closedSet.add(currentNode.row + "," + currentNode.col);
+      const neighbors = getNeighbors(graph, currentNode);
+
+neighbors.forEach(neighbor => {
+          if (closedSet.has(neighbor.row + "," + neighbor.col)) {
+              return;
+          }
+
+const tentativeG = currentNode.g + 1;
+
+if (tentativeG < neighbor.g) {
+              neighbor.parent = currentNode;
+              neighbor.g = tentativeG;
+              neighbor.h = manhattanDistance(neighbor, goalNode);
+              neighbor.f = neighbor.g + neighbor.h;
+
+if (!openSet.includes(neighbor)) {
+                  openSet.push(neighbor);
+              }
+          }
+      });
+  }
+
+return []; // No path found
+}
+//#endregion
 
 const djikstraGhost = {
   name: "djikstraGhost",
@@ -318,13 +518,24 @@ function displayEntityAnimation(entity) {
         visualPlayer.classList.add("animateHor");
       }
     }
-  } 
-
-  
+  }   
 }
+
+function updateScoreDisplay() {
+  const scoreDisplay = document.getElementById("score");
+  scoreDisplay.textContent = `Score: ${score}`;
+}
+
+
 //#endregion
 
 //#region Utility
+function collisionCheck(ghost){
+  if(pacman.x === ghost.x && pacman.y === ghost.y){
+    return true;
+  }
+}
+
 function getTileAtCoord({ row, col }) {
   return tiles[row][col];
 }
@@ -389,11 +600,15 @@ function checkForItems(x, y) {
 
   if (item === 2) {
     console.log("coin");
+    score += 50;
     eatPowerUp();
   }
   if (item === 3) {
     console.log("xp");
+    score += 10;
+    playSound(creditSound);
   }
+  updateScoreDisplay();
   takeItem(x, y);
 }
 
@@ -407,6 +622,37 @@ function takeItem(col, row) {
   tiles[row][col] = 0;
 
 }
+
+
+//#endregion
+
+//#region SOUND
+
+let isPowerUpSoundPlaying = false;
+
+const deathSound = document.querySelector("#death-sound");
+const creditSound = document.querySelector("#credit-sound");
+const startSound = document.querySelector("#start-sound");
+const powerUpSound = document.querySelector("#power-sound");
+const eatGhostSound = document.querySelector("#eat-ghost-sound");
+const sirenSound = document.querySelector("#siren-sound");
+
+function playSound(sound) {
+  sound.play();
+}
+
+
+function playPowerUpSound() {
+  powerUpSound.loop = true;
+  powerUpSound.play();
+}
+
+function stopPowerUpSound() {
+  powerUpSound.loop = false;
+  powerUpSound.pause();
+  powerUpSound.currentTime = 0; // reset
+}
+
 //#endregion
 
 //#region Debugging

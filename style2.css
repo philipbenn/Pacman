@@ -3,8 +3,22 @@
 }
 
 body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
   background-color: #000;
   color: #efef73;
+  font-family: "Silkscreen", sans-serif;
+}
+
+#score {
+  padding: 10px;
+  background-color: #000;
+  color: #efef73;
+  z-index: 2;
 }
 
 #gameBoard {
@@ -12,6 +26,7 @@ body {
   grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
   width: fit-content;
 }
+
 
 .gameOverPopUp {
   position: absolute;
@@ -61,6 +76,8 @@ body {
   background: url('images/ghosts.png');
   background-size: 256px 320px; /* Total width and height of the sprite sheet */
   image-rendering: pixelated;
+  transition: transform 0.2s linear;
+
 }
 
 .blinking {
@@ -164,15 +181,6 @@ body {
   height: 10px;
   background-color: tan;
   border-radius: 50%;
-  margin: auto;
-}
-
-.food {
-  /* background-image: url('food.png'); */
-  background-color: red;
-  border-radius: 50%;
-  height: 10px;
-  width: 10px;
   margin: auto;
 }
 
