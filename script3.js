@@ -16,52 +16,47 @@ function start() {
 const updateInterval = 200;
 let lastTimestamp = 0;
 let score = 0;
-
+let enemyMove = true;
 function tick(timestamp) {
 
   if(timestamp - lastTimestamp > updateInterval){
+    
     moveObject(pacman, getDirectionFromControls())
     displayEntityPosition(pacman);
     displayEntityAnimation(pacman);
 
-    //moveObject(aStarGhost);
-    moveObject(aStarGhost, getDirectionForAStarGhost());
-    for(let ghost of ghosts){
-      displayEntityPosition(ghost);
-    } 
-    //displayEntityAnimation(aStarGhost);
+    moveGhosts();
     lastTimestamp = timestamp;
+    
+  }
 
-  }
-  if (powerUpActive) {
-    scatter = true;
-    if (!isPowerUpSoundPlaying) {
-      playPowerUpSound();
-      isPowerUpSoundPlaying = true;
-    }
-    for (let ghost of ghosts) {
-      addBlinkingEffect(ghost);
-    }
-    powerUpDuration--;
-    if (powerUpDuration <= 0) {
-      for (let ghost of ghosts) {
-        removeBlinkingEffect(ghost);
-      }
-      scatter = false;
-      powerUpActive = false;
-      stopPowerUpSound();
-      isPowerUpSoundPlaying = false;
-    }
-  } else if (isPowerUpSoundPlaying) {
-    stopPowerUpSound();
-    isPowerUpSoundPlaying = false;
-  }
+  powerUpCheck();
 
   displayGrid();
+
   gameOverCheck();
+
   requestAnimationFrame(tick);
 }
-  
+
+function moveGhosts(){
+  if(scatter){
+    
+    if(enemyMove){
+    moveGhostsToScatter();
+    enemyMove = false;
+    } else {
+      enemyMove = true;
+    }
+    
+  } else {
+    moveObject(aStarGhost, getDirectionForAStarGhost());
+    
+  }
+  for(let ghost of ghosts){
+    displayEntityPosition(ghost);
+  }
+}
   
 //#region movement
 function moveObject(entity, direction) {
@@ -75,30 +70,33 @@ function moveObject(entity, direction) {
 
   
   if (canMoveTo(newPos)) {
-  entity.x = newPos.x;
-  entity.y = newPos.y;
-  entity.moving = true;
-  entity.direction = inputDirection;
-  if(entity.name === "pacman"){
-    checkForItems(entity.x, entity.y);
-  }
-  entity.lastDir = inputDirection;
+    moveTo(entity, newPos, inputDirection);
+    entity.lastDir = inputDirection;
+
   } else {
     tempDirection = getDirection(entity.lastDir);
     newPos = { x: entity.x, y: entity.y };
     newPos.x += tempDirection.x;
     newPos.y += tempDirection.y;
+
     if(canMoveTo(newPos)){
-      entity.x = newPos.x;//todo extract method from this as this is a duplicate of the if statement above
-      entity.y = newPos.y;
-      entity.moving = true;
-      entity.direction = inputDirection;
-      if(entity.name === "pacman"){
-        checkForItems(entity.x, entity.y);
-      }
+      moveTo(entity, newPos, entity.lastDir);
+
     } else {
       entity.moving = false;
+
     }
+
+  }
+}
+
+function moveTo(entity, newpos, inputDirection){
+  entity.x = newpos.x;
+  entity.y = newpos.y;
+  entity.moving = true;
+  entity.direction = inputDirection;
+  if(entity.name === "pacman"){
+    checkForItems(entity.x, entity.y);
   }
 }
 
@@ -113,22 +111,7 @@ function canMoveTo(pos){
 
 }
 
-function getDirection(direction) {
-  if (direction === "up") {
-    let temp = { x: 0, y: -1 };
-    return temp;
-  } else if (direction === "down") {
-    let temp = { x: 0, y: 1 };
-    return temp;
-  } else if (direction === "left") {
-    let temp = { x: -1, y: 0 };
-    return temp;
-  } else if (direction === "right") {
-    let temp = { x: 1, y: 0 };
-    return temp;
-  }
-  return { x: 0, y: 0 };
-}
+
 
 
 //#endregion
@@ -201,6 +184,26 @@ let powerUpDuration = 0;
 function eatPowerUp(){
   powerUpActive = true;
   powerUpDuration = 600;
+  scatter = true;
+  for (let ghost of ghosts) {
+    addBlinkingEffect(ghost);
+  }
+
+  playPowerUpSound();
+}
+
+function powerUpCheck(){
+  if (powerUpActive) {
+    powerUpDuration--;
+    if (powerUpDuration <= 0) {
+      for (let ghost of ghosts) {
+        removeBlinkingEffect(ghost);
+      }
+      scatter = false;
+      powerUpActive = false;
+      stopPowerUpSound();
+    }
+  }
 }
 
 
@@ -216,47 +219,7 @@ const aStarGhost = {
   lastDir: "right",
 };
 
-let scatter = false;
 
-const initialAstarGhost = {x: aStarGhost.x, y: aStarGhost.y};
-
-function moveGhostsToScatter(){
-  if(scatter){
-    for(let ghost of ghosts){
-      moveObject(ghost, getDirectionForScatter(ghost));
-    }
-  }
-}
-
-function getDirectionForScatter(ghost){
-  if(ghost.name === "aStarGhost"){
-    const paths = getAStarPath({row: ghost.y, col: ghost.x}, {row: initialAstarGhost.y, col: initialAstarGhost.x});
-  let path = paths[1];
-  if(paths.length === 1){
-    path = paths[0];
-  }
-  if(path.row > ghost.y){
-    console.log("down")
-    return "down";
-  }
-  if(path.row < ghost.y){
-    console.log("up")
-    return "up";
-  }
-  if(path.col > ghost.x){
-    console.log("right")
-    return "right";
-  }
-  if(path.col < ghost.x){
-    console.log("left")
-    return "left";
-  }
-}
-}
-
-function stopScatter(){
-  
-}
 
 function getDirectionForAStarGhost(){
   const paths = getAStarPath({row: aStarGhost.y, col: aStarGhost.x}, {row: pacman.y, col: pacman.x});
@@ -411,7 +374,7 @@ const gbfsGhost = {
   direction: undefined,
 };
 
-let ghosts = [aStarGhost, djikstraGhost, gbfsGhost];
+let ghosts = [aStarGhost];
 
 function spawnGhosts(){
   const ghostContainer = document.querySelector("#ghosts");
@@ -429,12 +392,60 @@ function spawnGhosts(){
   }
 }
 
+let scatter = false;
+
+const initialAstarGhost = {x: aStarGhost.x, y: aStarGhost.y};
+const initialDjikstraGhost = {x: djikstraGhost.x, y: djikstraGhost.y};
+const initialgbfsGhost = {x: gbfsGhost.x, y: gbfsGhost.y};
+
+function moveGhostsToScatter(){
+    for(let ghost of ghosts){
+      const initialPos = getInitialPos(ghost);
+      console.log(initialPos)
+      moveObject(ghost, getDirectionForScatter(ghost, initialPos));
+    }
+}
+
+function getInitialPos(ghost){
+  switch(ghost.name){
+    case "aStarGhost":
+      return initialAstarGhost;
+    case "djikstraGhost":
+      return initialDjikstraGhost;
+  }
+}
+
+function getDirectionForScatter(ghost, initialPos){
+  const paths = getAStarPath({row: ghost.y, col: ghost.x}, {row: initialPos.y, col: initialPos.x});
+  let path = paths[1];
+  if(paths.length === 1){
+    path = paths[0];
+  }
+  if(path.row > ghost.y){
+    console.log("down")
+    return "down";
+  }
+  if(path.row < ghost.y){
+    console.log("up")
+    return "up";
+  }
+  if(path.col > ghost.x){
+    console.log("right")
+    return "right";
+  }
+  if(path.col < ghost.x){
+    console.log("left")
+    return "left";
+  }
+
+}
+
 //#endregion
 
 //#region level
 const tiles = [
   [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+  [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3, 1],
   [1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
   [1, 3, 1, 2, 0, 1, 3, 1, 2, 0, 0, 1, 3, 1, 0, 2, 0, 1, 3, 1],
   [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
@@ -530,6 +541,23 @@ function updateScoreDisplay() {
 //#endregion
 
 //#region Utility
+function getDirection(direction) {
+  if (direction === "up") {
+    let temp = { x: 0, y: -1 };
+    return temp;
+  } else if (direction === "down") {
+    let temp = { x: 0, y: 1 };
+    return temp;
+  } else if (direction === "left") {
+    let temp = { x: -1, y: 0 };
+    return temp;
+  } else if (direction === "right") {
+    let temp = { x: 1, y: 0 };
+    return temp;
+  }
+  return { x: 0, y: 0 };
+}
+
 function collisionCheck(ghost){
   if(pacman.x === ghost.x && pacman.y === ghost.y){
     return true;
@@ -652,10 +680,6 @@ function stopPowerUpSound() {
   powerUpSound.pause();
   powerUpSound.currentTime = 0; // reset
 }
-
-//#endregion
-
-//#region Debugging
 
 //#endregion
 

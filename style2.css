@@ -76,7 +76,7 @@ body {
   background: url('images/ghosts.png');
   background-size: 256px 320px; /* Total width and height of the sprite sheet */
   image-rendering: pixelated;
-  transition: transform 0.2s linear;
+  transition: transform 0.4s linear;
 
 }
 
