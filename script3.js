@@ -23,14 +23,28 @@ function tick(timestamp) {
     displayEntityAnimation(pacman);
 
     //moveObject(aStarGhost);
-    displayEntityPosition(aStarGhost);
-    displayEntityPosition(djikstraGhost);
-    displayEntityPosition(gbfsGhost);
+    for(let ghost of ghosts){
+      displayEntityPosition(ghost);
+    }
     //displayEntityAnimation(aStarGhost);
     lastTimestamp = timestamp;
   }
+
+  if (powerUpActive) {
+    for(let ghost of ghosts){
+      addBlinkingEffect(ghost);
+    }
+    powerUpDuration--;
+    if (powerUpDuration <= 0) {
+      for(let ghost of ghosts){
+        removeBlinkingEffect(ghost);
+      }
+      powerUpActive = false;
+    }
+  }
   
   displayGrid();
+  gameOverCheck();
   requestAnimationFrame(tick);
 }
 
@@ -107,8 +121,53 @@ function getDirection(direction) {
 //#endregion
 
 //#region Model
+function gameOverScreen() {
+  console.log("Game Over");
+
+  const gameOverScreen = document.createElement("div");
+  gameOverScreen.classList.add("gameOverPopUp");
+  gameOverScreen.innerHTML = `
+    <h1>Game Over</h1>
+    <button id="restartButton">Restart</button>
+  `;
+  document.body.append(gameOverScreen);
+
+  // Remove Pacman and ghosts from the screen
+  despawnEntity(pacman);
+  ghosts.forEach(ghost => despawnEntity(ghost));
+
+  // Add an event listener to the restart button to reload the game
+  document.getElementById("restartButton").addEventListener("click", () => {
+    location.reload();
+  });
+
+  window.removeEventListener("keydown", keyDown);
+}
+
+
+//#endregion
 
 //#region pacman
+let gameOver = false;
+
+function gameOverCheck() {
+  for (let ghost of ghosts) {
+    if (powerUpActive && pacman.x === ghost.x && pacman.y === ghost.y) {
+      console.log("Ghost has been Eaten!");
+
+      ghosts.splice(ghosts.indexOf(ghost), 1);
+      despawnEntity(ghost);
+
+    } else if (!powerUpActive && pacman.x === ghost.x && pacman.y === ghost.y) {
+      if (!gameOver) {
+        gameOver = true;
+        gameOverScreen();
+      }
+    }
+  }
+}
+
+
 const pacman = {
   name: "pacman",
   x: 0,
@@ -116,12 +175,21 @@ const pacman = {
   moving: false,
   direction: undefined,
 };
+let powerUpActive = false;
+let powerUpDuration = 0;
+
+function eatPowerUp(){
+  powerUpActive = true;
+  powerUpDuration = 1000;
+}
+
+
 //#endregion
 
 //#region ghost
 const aStarGhost = {
   name: "aStarGhost",
-  x: 5,
+  x: 8,
    y: 5,
   moving: false,
   direction: undefined,
@@ -129,7 +197,7 @@ const aStarGhost = {
 
 const djikstraGhost = {
   name: "djikstraGhost",
-  x: 3,
+  x: 1,
   y: 5, 
   moving: false,
   direction: undefined,
@@ -137,8 +205,8 @@ const djikstraGhost = {
 
 const gbfsGhost = {
   name: "gbfsGhost",
-  x: 5,
-  y: 3,
+  x: 15,
+  y: 5,
   moving: false,
   direction: undefined,
 };
@@ -201,6 +269,24 @@ function createGrid(){
       board.append(cell);
     }
   }
+}
+
+function addBlinkingEffect(entity){
+  const visualEntity = document.querySelector(`#${entity.name}`);
+  visualEntity.classList.add("blinking");
+
+}
+
+function removeBlinkingEffect(entity){
+  const visualEntity = document.querySelector(`#${entity.name}`);
+  visualEntity.classList.remove("blinking");
+
+}
+
+function despawnEntity(entity){
+  const visualEntity = document.querySelector(`#${entity.name}`);
+  visualEntity.remove();
+
 }
 
 function displayGrid(){
@@ -303,6 +389,7 @@ function checkForItems(x, y) {
 
   if (item === 2) {
     console.log("coin");
+    eatPowerUp();
   }
   if (item === 3) {
     console.log("xp");

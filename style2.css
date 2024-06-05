@@ -1,4 +1,4 @@
-:root{
+:root {
   --GRID_WIDTH: 0;
 }
 
@@ -7,10 +7,41 @@ body {
   color: #efef73;
 }
 
-#gameBoard{
-    display: grid;
-    grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
-    width: fit-content
+#gameBoard {
+  display: grid;
+  grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
+  width: fit-content;
+}
+
+.gameOverPopUp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #000;
+  color: #efef73;
+  padding: 20px;
+  border-radius: 5px;
+  z-index: 3;
+  text-align: center;
+}
+
+.gameOverPopUp h1 {
+  margin: 0 0 20px 0;
+  font-size: 2em;
+}
+
+.gameOverPopUp button {
+  padding: 10px 20px;
+  background-color: #efef73;
+  color: #000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.gameOverPopUp button:hover {
+  background-color: #ffef8b;
 }
 
 .cell {
@@ -19,54 +50,67 @@ body {
   background-color: #000000;
 }
 
-#ghosts{
+#ghosts {
   position: absolute;
 }
 
 .ghost {
-width: 32px; /* Width of one frame */
-height: 32px; /* Height of one frame */
-position: absolute;
-background: url('images/ghosts.png');
-background-size: 256px 320px; /* Total width and height of the sprite sheet */
-image-rendering: pixelated;
+  width: 32px; /* Width of one frame */
+  height: 32px; /* Height of one frame */
+  position: absolute;
+  background: url('images/ghosts.png');
+  background-size: 256px 320px; /* Total width and height of the sprite sheet */
+  image-rendering: pixelated;
+}
+
+.blinking {
+  animation: blink 0.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 #pacman {
-width: 32px; /* Width of one frame */
-height: 32px; /* Height of one frame */
-background: url('images/pacman.gif');
-background-size: 128px 32px; /* Total width and height of the sprite sheet */
-image-rendering: pixelated;
-position: absolute;
-transition: transform 0.2s linear;
-background-color: transparent;
+  width: 32px; /* Width of one frame */
+  height: 32px; /* Height of one frame */
+  background: url('images/pacman.gif');
+  background-size: 128px 32px; /* Total width and height of the sprite sheet */
+  image-rendering: pixelated;
+  position: absolute;
+  transition: transform 0.2s linear;
+  background-color: transparent;
 }
 
-#pacman.animateHor{
+#pacman.animateHor {
   animation: pacman-animation 0.5s steps(4) infinite;
 }
 
-#pacman.animateVer{
+#pacman.animateVer {
   animation: pacman-animation-horizontal 0.5s steps(4) infinite;
 }
 
 @keyframes pacman-animation {
-from {
-  background-position: 0 0;
-}
-to {
-  background-position: -128px 0; /* Total width of the sprite sheet */
-}
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -128px 0; /* Total width of the sprite sheet */
+  }
 }
 
 @keyframes pacman-animation-horizontal {
-from {
-  background-position: 0 0;
-}
-to {
-  background-position: 0 -128px; /* Total width of the sprite sheet */
-}
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 -128px; /* Total width of the sprite sheet */
+  }
 }
 
 #pacman.left {
@@ -90,16 +134,16 @@ to {
 }
 
 .moving {
-animation-duration: 0.5s;
-animation-timing-function: steps(4);
-animation-iteration-count: infinite;
+  animation-duration: 0.5s;
+  animation-timing-function: steps(4);
+  animation-iteration-count: infinite;
 }
 
-.wall{
+.wall {
   background-color: darkblue;
 }
 
-.coin{
+.coin {
   height: 15px !important;
   width: 15px !important;
   background-color: peachpuff;
@@ -124,7 +168,7 @@ animation-iteration-count: infinite;
 }
 
 .food {
-  /*background-image: url('food.png'); */
+  /* background-image: url('food.png'); */
   background-color: red;
   border-radius: 50%;
   height: 10px;
@@ -159,16 +203,16 @@ input[type="number"]:focus {
 }
 
 /* Debugging */
-.highlight{
+.highlight {
   outline: 2px dashed red;
   translate: 0 0;
 }
 
-.show-rect{
+.show-rect {
   outline: 2px solid red;
 }
 
-.show-reg-point::before{
+.show-reg-point::before {
   content: "";
   position: absolute;
   background-color: cyan;
@@ -177,7 +221,7 @@ input[type="number"]:focus {
   translate: var(--regX) var(--regY);
 }
 
-.show-hitbox::before{
+.show-hitbox::before {
   content: "";
   position: absolute;
   outline: 2px solid lightcoral;
@@ -186,6 +230,6 @@ input[type="number"]:focus {
   translate: var(--hitboxX) var(--hitboxY);
 }
 
-.show-hitbox1{
+.show-hitbox1 {
   outline: 2px solid lightcoral;
 }
