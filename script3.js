@@ -40,22 +40,29 @@ function tick(timestamp) {
 }
 
 function moveGhosts(){
-  if(scatter){
-    
-    if(enemyMove){
-    moveGhostsToScatter();
-    enemyMove = false;
-    } else {
-      enemyMove = true;
-    }
-    
-  } else {
-    moveObject(aStarGhost, getDirectionForAStarGhost());
-    
-  }
   for(let ghost of ghosts){
+    if(ghost.eaten && ghost.alreadyEaten === false){
+      moveGhostHome(ghost);
+      if(ghost.x === getHomePos(ghost).x && ghost.y === getHomePos(ghost).y){
+        removeBlinkingEffect(ghost);
+        eatenGhost(ghost);
+        ghost.alreadyEaten = true;
+      }
+    } else if(scatter && ghost.eaten === false){
+
+      if(ghost.halfmove){
+        moveGhostScatter(ghost);
+        ghost.halfmove = false;
+      } else {
+        ghost.halfmove = true;
+      }
+    } else {
+
+      moveObject(ghost, getDirectionForGhost(ghost));
+    }
     displayEntityPosition(ghost);
   }
+  
 }
   
 //#region movement
@@ -151,15 +158,18 @@ let gameOver = false;
 function gameOverCheck() {
   for (let ghost of ghosts) {
     let collision = collisionCheck(ghost);
-    if (powerUpActive && collision) {
+    if (powerUpActive && collision && !ghost.eaten) {
       console.log("Ghost has been Eaten!");
       score += 200;
       updateScoreDisplay();
       playSound(eatGhostSound);
-      ghosts.splice(ghosts.indexOf(ghost), 1);
-      despawnEntity(ghost);
+      //ghosts.splice(ghosts.indexOf(ghost), 1);
+      ghost.eaten = true;
+      eatenGhost(ghost);
+      removeBlinkingEffect(ghost);
+      //despawnEntity(ghost);
 
-    } else if (!powerUpActive && collision) {
+    } else if (collision && ghost.alreadyEaten === true) {
       if (!gameOver) {
         playSound(deathSound);
         gameOver = true;
@@ -187,6 +197,8 @@ function eatPowerUp(){
   scatter = true;
   for (let ghost of ghosts) {
     addBlinkingEffect(ghost);
+    ghost.eaten = false;
+    ghost.alreadyEaten = false;
   }
 
   playPowerUpSound();
@@ -212,36 +224,36 @@ function powerUpCheck(){
 //#region ghost
 const aStarGhost = {
   name: "aStarGhost",
-  x: 1,
-  y: 1,
+  x: 8,
+  y: 5,
   moving: false,
   direction: undefined,
   lastDir: "right",
+  eaten: false,
+  alreadyEaten: true,
+  halfmove: true,
+  scatterX: 1,
+  scatterY: 1,
 };
 
 
 
 function getDirectionForAStarGhost(){
   const paths = getAStarPath({row: aStarGhost.y, col: aStarGhost.x}, {row: pacman.y, col: pacman.x});
-  console.log(paths);
   let path = paths[1];
   if(paths.length === 1){
     path = paths[0];
   }
   if(path.row > aStarGhost.y){
-    console.log("down")
     return "down";
   }
   if(path.row < aStarGhost.y){
-    console.log("up")
     return "up";
   }
   if(path.col > aStarGhost.x){
-    console.log("right")
     return "right";
   }
   if(path.col < aStarGhost.x){
-    console.log("left")
     return "left";
   }
   
@@ -394,24 +406,38 @@ function spawnGhosts(){
 
 let scatter = false;
 
-const initialAstarGhost = {x: aStarGhost.x, y: aStarGhost.y};
+const scatterPosAstarGhost = {x: aStarGhost.scatterX, y: aStarGhost.scatterY};
+const homePosAstarGhost = {x: aStarGhost.x, y: aStarGhost.y};
 const initialDjikstraGhost = {x: djikstraGhost.x, y: djikstraGhost.y};
 const initialgbfsGhost = {x: gbfsGhost.x, y: gbfsGhost.y};
 
 function moveGhostsToScatter(){
     for(let ghost of ghosts){
-      const initialPos = getInitialPos(ghost);
-      console.log(initialPos)
+      const initialPos = getScatterPos(ghost);
       moveObject(ghost, getDirectionForScatter(ghost, initialPos));
     }
 }
 
-function getInitialPos(ghost){
+function moveGhostScatter(ghost){
+  const initialPos = getScatterPos(ghost);
+  moveObject(ghost, getDirectionForScatter(ghost, initialPos));
+}
+
+function getScatterPos(ghost){
   switch(ghost.name){
     case "aStarGhost":
-      return initialAstarGhost;
+      return scatterPosAstarGhost;
     case "djikstraGhost":
       return initialDjikstraGhost;
+  }
+}
+
+function getHomePos(ghost){
+  switch(ghost.name){
+    case "aStarGhost":
+      return homePosAstarGhost;
+    case "djikstraGhost":
+      return {x: 1, y: 5};
   }
 }
 
@@ -422,38 +448,52 @@ function getDirectionForScatter(ghost, initialPos){
     path = paths[0];
   }
   if(path.row > ghost.y){
-    console.log("down")
     return "down";
   }
   if(path.row < ghost.y){
-    console.log("up")
     return "up";
   }
   if(path.col > ghost.x){
-    console.log("right")
     return "right";
   }
   if(path.col < ghost.x){
-    console.log("left")
     return "left";
   }
 
 }
 
+function getDirectionForGhost(ghost){
+  let direction;
+  if (ghost.name === "aStarGhost") {
+    direction = getDirectionForAStarGhost();
+  } else if (ghost.name === "djikstraGhost") {
+    //direction = getDirectionForDjikstraGhost();
+  } else if (ghost.name === "gbfsGhost") {
+    //direction = getDirectionForGbfsGhost();
+  }
+  return direction;
+
+}
+
+function moveGhostHome(ghost){
+  const initialPos = getHomePos(ghost);
+  moveObject(ghost, getDirectionForScatter(ghost, initialPos));
+
+}
 //#endregion
 
 //#region level
 const tiles = [
   [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3, 1],
-  [1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
+  [1, 3, 1, 1, 1, 1, 3, 1, 1, 0, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
   [1, 3, 1, 2, 0, 1, 3, 1, 2, 0, 0, 1, 3, 1, 0, 2, 0, 1, 3, 1],
   [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
   [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
   [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
   [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
-  [1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
-  [1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+  [1, 2, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
+  [1, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
@@ -537,7 +577,15 @@ function updateScoreDisplay() {
   scoreDisplay.textContent = `Score: ${score}`;
 }
 
+function eatenGhost(ghost){
+  const visualGhost = document.querySelector(`#${ghost.name}`);
+  if(visualGhost.classList.contains("eaten")){
+    visualGhost.classList.remove("eaten");
+  } else {
+  visualGhost.classList.add("eaten");
+}
 
+}
 //#endregion
 
 //#region Utility
