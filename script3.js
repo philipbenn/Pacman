@@ -679,7 +679,6 @@ const tile_size = 32;
 
 
 //#endregion
-//#endregion
 
 //#region View
 function createGrid(){
