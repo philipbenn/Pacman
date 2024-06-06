@@ -11,5 +11,6 @@ Mikkel Johansen
 
 __Github repository link:__
 https://github.com/philipbenn/Pacman
+
 __Github pages link:__
 https://philipbenn.github.io/Pacman
