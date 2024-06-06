@@ -1,59 +1,94 @@
-:root{
-    --GRID_WIDTH: 0;
+:root {
+  --GRID_WIDTH: 0;
 }
 
 body {
-    background-color: #000;
-    color: #efef73;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  background-color: #000;
+  color: #efef73;
+  font-family: "Silkscreen", sans-serif;
 }
 
-#gamefield{
-  border: 1px solid darkblue;
-  border-radius: 5px;
-  width: -moz-fit-content;
+#score {
+  padding: 10px;
+  background-color: #000;
+  color: #efef73;
+  z-index: 2;
+}
+
+#gameBoard {
+  display: grid;
+  grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
   width: fit-content;
-  display: grid;
-  grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
-
 }
 
-#background{
-  grid-area: 1 / 1;
-  display: grid;
-  grid-template-columns: repeat(var(--GRID_WIDTH), max-content);
+
+.gameOverPopUp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #000;
+  color: #efef73;
+  padding: 20px;
+  border-radius: 5px;
+  z-index: 3;
+  text-align: center;
 }
 
-#background .tile{
-  width: var(--TILE_SIZE);
+.gameOverPopUp h1 {
+  margin: 0 0 20px 0;
+  font-size: 2em;
+}
+
+.gameOverPopUp button {
+  padding: 10px 20px;
+  background-color: #efef73;
+  color: #000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.gameOverPopUp button:hover {
+  background-color: #ffef8b;
+}
+
+.cell {
+  width: 32px;
   aspect-ratio: 1 / 1;
-
-  background-repeat: no-repeat;
-  background-size: 100%;
-  image-rendering: pixelated;
-
+  background-color: #000000;
 }
 
-  .cell {
-    width: 32px;
-    aspect-ratio: 1 / 1;
-    border: 2px solid gray;
-  }
-
-  #characters{
-    grid-area: 1 / 1;
-    position: relative;
-    
+#ghosts {
+  position: absolute;
 }
 
-#ghosts .ghost {
+.ghost {
   width: 32px; /* Width of one frame */
   height: 32px; /* Height of one frame */
+  position: absolute;
   background: url('images/ghosts.png');
   background-size: 256px 320px; /* Total width and height of the sprite sheet */
-  background-position: 0 0; /* Position of the first ghost in the first state */
   image-rendering: pixelated;
-  position: absolute;
-  background-color: transparent;
+  transition: transform 0.2s linear;
+
+}
+
+.eaten{
+  background: url("images/ghost-eyes.png");
+  background-size: 32px 32px;
+  border-radius: 50%;
+  margin: auto;
+}
+
+.blinking {
+  animation: blink 0.5s infinite;
 }
 
 @keyframes blink {
@@ -65,19 +100,23 @@ body {
   }
 }
 
-.blinking {
-  animation: blink 0.5s infinite;
-}
-
 #pacman {
-  width: 32px !important; /* Width of one frame */
-  height: 32px !important; /* Height of one frame */
+  width: 32px; /* Width of one frame */
+  height: 32px; /* Height of one frame */
   background: url('images/pacman.gif');
   background-size: 128px 32px; /* Total width and height of the sprite sheet */
   image-rendering: pixelated;
-  transition: transform 0.1s;
-  animation: pacman-animation 0.5s steps(4) infinite;
+  position: absolute;
+  transition: transform 0.2s linear;
   background-color: transparent;
+}
+
+#pacman.animateHor {
+  animation: pacman-animation 0.5s steps(4) infinite;
+}
+
+#pacman.animateVer {
+  animation: pacman-animation-horizontal 0.5s steps(4) infinite;
 }
 
 @keyframes pacman-animation {
@@ -89,20 +128,33 @@ body {
   }
 }
 
-.pacman-left {
-  transform: rotate(0deg);
+@keyframes pacman-animation-horizontal {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 -128px; /* Total width of the sprite sheet */
+  }
 }
 
-.pacman-up {
-  transform: rotate(90deg);
+#pacman.left {
+  background: url('images/pacman.gif');
+  background-size: 128px 32px; /* Total width and height of the sprite sheet */
 }
 
-.pacman-down {
-  transform: rotate(270deg);
+#pacman.up {
+  background: url('images/pacman_up.gif');
+  background-size: 32px 128px; /* Total width and height of the sprite sheet */
 }
 
-.pacman-right {
-  transform: rotate(180deg);
+#pacman.down {
+  background: url('images/pacman_down.gif');
+  background-size: 32px 128px; /* Total width and height of the sprite sheet */
+}
+
+#pacman.right {
+  background: url('images/pacman_right.gif');
+  background-size: 128px 32px; /* Total width and height of the sprite sheet */
 }
 
 .moving {
@@ -111,120 +163,89 @@ body {
   animation-iteration-count: infinite;
 }
 
-  .wall{
-    background-color: darkblue;
-  }
+.wall {
+  background-color: darkblue;
 
-  .coin{
-    height: 15px !important;
-    width: 15px !important;
-    background-color: peachpuff;
-    border-radius: 50%;
-    margin: auto;
-  }
-
-  .xp {
-    width: 3px !important;
-    height: 3px !important;
-    background-color: peachpuff;
-    border-radius: 50%;
-    margin: auto;
-  }
-
-  .power {
-    width: 10px;
-    height: 10px;
-    background-color: tan;
-    border-radius: 50%;
-    margin: auto;
-  }
-
-  .food {
-    /*background-image: url('food.png'); */
-    background-color: red;
-    border-radius: 50%;
-    height: 10px;
-    width: 10px;
-    margin: auto;
-  }
-  
-  input[type="number"] {
-    padding: 5px;
-    margin: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-    width: 100px;
-    box-sizing: border-box;
-    transition: border-color 0.3s;
-  }
-  
-  input[type="number"]:focus {
-    border-color: #66afe9;
-    outline: none;
-    box-shadow: 0 0 8px rgba(102, 175, 233, 0.6);
-  }
-
-  #create {
-    margin: 5px;
-    padding: 10px;
-    background-color: darkblue;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  #create:hover {
-    background-color: #003366;
-  }
-
-  #inputs {
-    margin-top: 10px;
-  }
-
-  .east {
-    border-right-color: transparent;
-  }
-  .west {
-    border-left-color: transparent;
-  }
-  .north {
-    border-top-color: transparent;
-  }
-  .south {
-    border-bottom-color: transparent;
-  }
-
-  /* Debugging */
-  .highlight{
-    outline: 2px dashed red;
-    translate: 0 0;
 }
 
-.show-rect{
-    outline: 2px solid red;
+.coin {
+  height: 15px !important;
+  width: 15px !important;
+  background-color: peachpuff;
+  border-radius: 50%;
+  margin: auto;
 }
 
-.show-reg-point::before{
-    content: "";
-    position: absolute;
-    background-color: cyan;
-    width: 3px;
-    height: 3px;
-    translate: var(--regX) var(--regY);
+.xp {
+  width: 3px !important;
+  height: 3px !important;
+  background-color: peachpuff;
+  border-radius: 50%;
+  margin: auto;
 }
 
-.show-hitbox::before{
-    content: "";
-    position: absolute;
-    outline: 2px solid lightcoral;
-    width: var(--hitboxWidth);
-    height: var(--hitboxHeight);
-    translate: var(--hitboxX) var(--hitboxY);
+.power {
+  width: 10px;
+  height: 10px;
+  background-color: tan;
+  border-radius: 50%;
+  margin: auto;
 }
 
-.show-hitbox1{
-    outline: 2px solid lightcoral;
+input[type="number"] {
+  padding: 5px;
+  margin: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100px;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+input[type="number"]:focus {
+  border-color: #66afe9;
+  outline: none;
+  box-shadow: 0 0 8px rgba(102, 175, 233, 0.6);
+}
+
+#create {
+  margin: 5px;
+  padding: 10px;
+  background-color: darkblue;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+/* Debugging */
+.highlight {
+  outline: 2px dashed red;
+  translate: 0 0;
+}
+
+.show-rect {
+  outline: 2px solid red;
+}
+
+.show-reg-point::before {
+  content: "";
+  position: absolute;
+  background-color: cyan;
+  width: 3px;
+  height: 3px;
+  translate: var(--regX) var(--regY);
+}
+
+.show-hitbox::before {
+  content: "";
+  position: absolute;
+  outline: 2px solid lightcoral;
+  width: var(--hitboxWidth);
+  height: var(--hitboxHeight);
+  translate: var(--hitboxX) var(--hitboxY);
+}
+
+.show-hitbox1 {
+  outline: 2px solid lightcoral;
 }

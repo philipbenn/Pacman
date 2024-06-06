@@ -1,30 +1,15 @@
-Game Features:
+# __PAC-MAN__
 
-Set boundaries
-Pacman movement
-Collision detection
-Create Pellets & Remove Pellets
-Create Food & Remove Food
-Create Ghosts
-Create Win condition, endgame screen
+Simple Pac-Man game using only vanilla JavaScript, HTML and CSS, trying to implement different pathfinding algorithms.
 
-N2H:
+<img src="pacman-dsa.png">
 
-Sound
-Score
-Power up?
+__Group members__
+Simon Jørgensen
+Philip Schønning
+Mikkel Johansen
 
-Algoritmer:
-
-A*
-BFS
-Hill Climbing
-Greedy Best First Search
-
-Inspiration:
-
-https://github.com/imadtoubal/Infinit-Pacman-with-JavaScript
-
-Algoritme:
-
-https://www.geeksforgeeks.org/a-search-algorithm/
+__Github repository link:__
+https://github.com/philipbenn/Pacman
+__Github pages link:__
+https://philipbenn.github.io/Pacman

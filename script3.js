@@ -1,4 +1,4 @@
-"use strict";
+  "use strict";
 
 window.addEventListener("load", start);
 
@@ -45,7 +45,7 @@ function moveGhosts(){
       moveGhostHome(ghost);
       if(ghost.x === getHomePos(ghost).x && ghost.y === getHomePos(ghost).y){
         removeBlinkingEffect(ghost);
-        eatenGhost(ghost);
+        regenGhost(ghost);
         ghost.alreadyEaten = true;
       }
     } else if(scatter && ghost.eaten === false){
@@ -196,9 +196,13 @@ function eatPowerUp(){
   powerUpDuration = 600;
   scatter = true;
   for (let ghost of ghosts) {
+    if(ghost.eaten == true && ghost.alreadyEaten == false){
+
+    } else {
     addBlinkingEffect(ghost);
     ghost.eaten = false;
     ghost.alreadyEaten = false;
+    }
   }
 
   playPowerUpSound();
@@ -210,6 +214,7 @@ function powerUpCheck(){
     if (powerUpDuration <= 0) {
       for (let ghost of ghosts) {
         removeBlinkingEffect(ghost);
+        ghost.alreadyEaten = true;
       }
       scatter = false;
       powerUpActive = false;
@@ -222,19 +227,6 @@ function powerUpCheck(){
 //#endregion
 
 //#region ghost
-const aStarGhost = {
-  name: "aStarGhost",
-  x: 8,
-  y: 5,
-  moving: false,
-  direction: undefined,
-  lastDir: "right",
-  eaten: false,
-  alreadyEaten: true,
-  halfmove: true,
-  scatterX: 1,
-  scatterY: 1,
-};
 
 
 
@@ -373,20 +365,46 @@ return []; // No path found
 const djikstraGhost = {
   name: "djikstraGhost",
   x: 1,
-  y: 5, 
+  y: 12, 
   moving: false,
   direction: undefined,
+  lastDir: "right",
+  eaten: false,
+  alreadyEaten: true,
+  halfmove: true,
+  scatterX: 1,
+  scatterY: 1,
 };
+
+
+const aStarGhost = {
+  name: "aStarGhost",
+  x: 10,
+  y: 8,
+  moving: false,
+  direction: undefined,
+  lastDir: "right",
+  eaten: false,
+  alreadyEaten: true,
+  halfmove: true,
+  scatterX: 1,
+  scatterY: 1,
+};
+
 
 const gbfsGhost = {
   name: "gbfsGhost",
-  x: 15,
-  y: 5,
-  moving: false,
-  direction: undefined,
+  x: 12,
+  y: 9,
+  lastDir: "right",
+  eaten: false,
+  alreadyEaten: true,
+  halfmove: true,
+  scatterX: 18,
+  scatterY: 1,
 };
 
-let ghosts = [aStarGhost];
+let ghosts = [aStarGhost, gbfsGhost];
 
 function spawnGhosts(){
   const ghostContainer = document.querySelector("#ghosts");
@@ -409,7 +427,8 @@ let scatter = false;
 const scatterPosAstarGhost = {x: aStarGhost.scatterX, y: aStarGhost.scatterY};
 const homePosAstarGhost = {x: aStarGhost.x, y: aStarGhost.y};
 const initialDjikstraGhost = {x: djikstraGhost.x, y: djikstraGhost.y};
-const initialgbfsGhost = {x: gbfsGhost.x, y: gbfsGhost.y};
+const scattergbfsGhost = {x: gbfsGhost.scatterX, y: gbfsGhost.scatterY};
+const homePosGbfsGhost = {x: gbfsGhost.x, y: gbfsGhost.y}
 
 function moveGhostsToScatter(){
     for(let ghost of ghosts){
@@ -427,8 +446,8 @@ function getScatterPos(ghost){
   switch(ghost.name){
     case "aStarGhost":
       return scatterPosAstarGhost;
-    case "djikstraGhost":
-      return initialDjikstraGhost;
+    case "gbfsGhost":
+      return scattergbfsGhost;
   }
 }
 
@@ -436,8 +455,8 @@ function getHomePos(ghost){
   switch(ghost.name){
     case "aStarGhost":
       return homePosAstarGhost;
-    case "djikstraGhost":
-      return {x: 1, y: 5};
+    case "gbfsGhost":
+      return homePosGbfsGhost
   }
 }
 
@@ -469,7 +488,7 @@ function getDirectionForGhost(ghost){
   } else if (ghost.name === "djikstraGhost") {
     //direction = getDirectionForDjikstraGhost();
   } else if (ghost.name === "gbfsGhost") {
-    //direction = getDirectionForGbfsGhost();
+    direction = getDirectionForGbfsGhost();
   }
   return direction;
 
@@ -477,24 +496,100 @@ function getDirectionForGhost(ghost){
 
 function moveGhostHome(ghost){
   const initialPos = getHomePos(ghost);
+  console.log(initialPos);
+  console.log(ghost)
   moveObject(ghost, getDirectionForScatter(ghost, initialPos));
 
 }
 //#endregion
 
+//#region greedy best first search
+function getDirectionForGbfsGhost(){
+  const paths = greedyBestFirstSearch(tiles, {row: gbfsGhost.y, col: gbfsGhost.x}, {row: pacman.y, col: pacman.x});
+  let path = paths[1];
+  if(paths.length === 1){
+    path = paths[0];
+  }
+  if(path.row > gbfsGhost.y){
+    return "down";
+  }
+  if(path.row < gbfsGhost.y){
+    return "up";
+  }
+  if(path.col > gbfsGhost.x){
+    return "right";
+  }
+  if(path.col < gbfsGhost.x){
+    return "left";
+  }
+}
+
+function greedyBestFirstSearch(grid, startCoord, goalCoord) {
+  const graph = buildGraph(grid);
+  const startNode = graph[startCoord.row][startCoord.col];
+  const goalNode = graph[goalCoord.row][goalCoord.col];
+  const openSet = [];
+  const closedSet = new Set();
+
+  // Priority queue sorted by heuristic value (h)
+  startNode.h = manhattanDistance(startNode, goalNode);
+  openSet.push(startNode);
+
+  while (openSet.length > 0) {
+      // Sort the open set to get the node with the lowest heuristic value
+      openSet.sort((a, b) => a.h - b.h);
+      const currentNode = openSet.shift();
+
+      // If the goal node is reached, reconstruct the path
+      if (currentNode === goalNode) {
+          return reconstructPath(currentNode);
+      }
+
+      closedSet.add(currentNode.row + "," + currentNode.col);
+      const neighbors = getNeighbors(graph, currentNode);
+
+      neighbors.forEach(neighbor => {
+          if (closedSet.has(neighbor.row + "," + neighbor.col)) {
+              return;
+          }
+
+          neighbor.h = manhattanDistance(neighbor, goalNode);
+
+          if (!openSet.includes(neighbor)) {
+              neighbor.parent = currentNode;
+              openSet.push(neighbor);
+          }
+      });
+  }
+
+  return []; // No path found
+}
+//#endregion
+
 //#region level
 const tiles = [
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3, 1],
-  [1, 3, 1, 1, 1, 1, 3, 1, 1, 0, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
-  [1, 3, 1, 2, 0, 1, 3, 1, 2, 0, 0, 1, 3, 1, 0, 2, 0, 1, 3, 1],
-  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
-  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
-  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
-  [1, 3, 1, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 1, 3, 1],
-  [1, 2, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 3, 1],
-  [1, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 3, 3, 1, 2, 1, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1, 3, 2, 3, 3, 3, 1],
+    [1, 3, 3, 3, 3, 1, 1, 1, 0, 1, 0, 3, 3, 3, 3, 1, 3, 1, 0, 1, 3, 1],
+    [1, 3, 3, 3, 3, 0, 0, 1, 0, 1, 0, 3, 0, 3, 3, 3, 3, 1, 0, 1, 3, 1],
+    [1, 3, 3, 1, 3, 3, 3, 0, 0, 0, 0, 3, 3, 1, 3, 3, 3, 0, 0, 3, 3, 1],
+    [1, 1, 3, 1, 1, 1, 3, 1, 1, 0, 0, 1, 3, 1, 1, 1, 0, 1, 1, 3, 3, 1],
+    [1, 1, 3, 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1],
+    [1, 3, 3, 1, 0, 0, 0, 1, 3, 1, 1, 0, 1, 1, 3, 0, 0, 1, 0, 3, 3, 1],
+    [1, 3, 0, 1, 0, 1, 0, 0, 3, 1, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 3, 1],
+    [1, 3, 0, 0, 0, 1, 1, 1, 3, 1, 0, 0, 0, 1, 3, 1, 1, 1, 0, 1, 3, 1],
+    [1, 3, 3, 3, 3, 3, 2, 1, 3, 1, 0, 0, 0, 1, 3, 3, 3, 1, 0, 1, 3, 1],
+    [1, 3, 3, 1, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 2, 0, 3, 0, 0, 3, 3, 1],
+    [1, 1, 3, 1, 1, 1, 0, 1, 3, 0, 3, 3, 0, 3, 3, 1, 3, 1, 1, 3, 3, 1],
+    [1, 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1, 3, 0, 0, 0, 3, 0, 0, 3, 1, 1],
+    [1, 3, 3, 1, 3, 3, 3, 1, 0, 3, 3, 0, 3, 1, 3, 3, 3, 1, 0, 3, 3, 1],
+    [1, 3, 0, 1, 3, 1, 3, 3, 3, 0, 3, 0, 3, 1, 3, 1, 2, 0, 0, 0, 3, 1],
+    [1, 3, 0, 0, 3, 1, 1, 1, 3, 1, 3, 3, 3, 3, 3, 1, 1, 1, 0, 1, 3, 1],
+    [1, 3, 0, 0, 3, 3, 2, 1, 3, 1, 0, 0, 0, 0, 3, 0, 0, 1, 0, 1, 3, 1],
+    [1, 3, 3, 1, 0, 3, 0, 0, 3, 3, 0, 0, 0, 1, 3, 0, 3, 3, 0, 0, 3, 1],
+    [1, 1, 3, 1, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 3, 1],
+    [1, 1, 3, 3, 3, 1, 3, 3, 3, 1, 3, 1, 3, 1, 3, 3, 3, 3, 2, 3, 3, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
 const GRID_width = tiles[0].length;
@@ -579,11 +674,13 @@ function updateScoreDisplay() {
 
 function eatenGhost(ghost){
   const visualGhost = document.querySelector(`#${ghost.name}`);
-  if(visualGhost.classList.contains("eaten")){
-    visualGhost.classList.remove("eaten");
-  } else {
   visualGhost.classList.add("eaten");
+
 }
+
+function regenGhost(ghost){
+  const visualGhost = document.querySelector(`#${ghost.name}`);
+  visualGhost.classList.remove("eaten");
 
 }
 //#endregion
