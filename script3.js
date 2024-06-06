@@ -182,8 +182,8 @@ function gameOverCheck() {
 
 const pacman = {
   name: "pacman",
-  x: 18,
-  y: 8,
+  x: 11,
+  y: 19,
   moving: false,
   direction: undefined,
   lastDir: "right",
@@ -364,8 +364,8 @@ return []; // No path found
 
 const djikstraGhost = {
   name: "djikstraGhost",
-  x: 1,
-  y: 12, 
+  x: 10,
+  y: 10, 
   moving: false,
   direction: undefined,
   lastDir: "right",
@@ -404,7 +404,7 @@ const gbfsGhost = {
   scatterY: 1,
 };
 
-let ghosts = [aStarGhost, gbfsGhost];
+let ghosts = [aStarGhost, gbfsGhost, djikstraGhost];
 
 function spawnGhosts(){
   const ghostContainer = document.querySelector("#ghosts");
@@ -426,9 +426,13 @@ let scatter = false;
 
 const scatterPosAstarGhost = {x: aStarGhost.scatterX, y: aStarGhost.scatterY};
 const homePosAstarGhost = {x: aStarGhost.x, y: aStarGhost.y};
-const initialDjikstraGhost = {x: djikstraGhost.x, y: djikstraGhost.y};
+
 const scattergbfsGhost = {x: gbfsGhost.scatterX, y: gbfsGhost.scatterY};
 const homePosGbfsGhost = {x: gbfsGhost.x, y: gbfsGhost.y}
+
+const scatterDjikstraGhost = {x: djikstraGhost.scatterX, y: djikstraGhost.scatterY};
+const homePosDjikstraGhost = {x: djikstraGhost.x, y: djikstraGhost.y};
+
 
 function moveGhostsToScatter(){
     for(let ghost of ghosts){
@@ -448,6 +452,8 @@ function getScatterPos(ghost){
       return scatterPosAstarGhost;
     case "gbfsGhost":
       return scattergbfsGhost;
+    case "djikstraGhost":
+      return scatterDjikstraGhost;
   }
 }
 
@@ -457,6 +463,8 @@ function getHomePos(ghost){
       return homePosAstarGhost;
     case "gbfsGhost":
       return homePosGbfsGhost
+    case "djikstraGhost":
+      return homePosDjikstraGhost;
   }
 }
 
@@ -486,7 +494,7 @@ function getDirectionForGhost(ghost){
   if (ghost.name === "aStarGhost") {
     direction = getDirectionForAStarGhost();
   } else if (ghost.name === "djikstraGhost") {
-    //direction = getDirectionForDjikstraGhost();
+    direction = getDirectionForDjikstraGhost();
   } else if (ghost.name === "gbfsGhost") {
     direction = getDirectionForGbfsGhost();
   }
@@ -501,6 +509,77 @@ function moveGhostHome(ghost){
   moveObject(ghost, getDirectionForScatter(ghost, initialPos));
 
 }
+//#endregion
+
+//#region djikstra
+function getDirectionForDjikstraGhost(){
+  const paths = djikstra(tiles, {row: djikstraGhost.y, col: djikstraGhost.x}, {row: pacman.y, col: pacman.x});
+  console.log(paths)
+  let path = paths[1];
+  if(paths.length === 1){
+    path = paths[0];
+  }
+  if(path.row > djikstraGhost.y){
+    return "down";
+  }
+  if(path.row < djikstraGhost.y){
+    return "up";
+  }
+  if(path.col > djikstraGhost.x){
+    return "right";
+  }
+  if(path.col < djikstraGhost.x){
+    return "left";
+  }
+
+}
+
+function djikstra(grid, startCoord, goalCoord) {
+  const graph = buildGraph(grid);
+  const startNode = graph[startCoord.row][startCoord.col];
+  const goalNode = graph[goalCoord.row][goalCoord.col];
+  const openSet = [];
+  const closedSet = new Set();
+
+  // Initialize start node distance to 0
+  startNode.distance = 0;
+  openSet.push(startNode);
+
+  while (openSet.length > 0) {
+      // Sort the open set to get the node with the lowest distance
+      openSet.sort((a, b) => a.distance - b.distance);
+      const currentNode = openSet.shift();
+
+      // If the goal node is reached, reconstruct the path
+      if (currentNode === goalNode) {
+          return reconstructPath(currentNode);
+      }
+
+      closedSet.add(currentNode.row + "," + currentNode.col);
+      const neighbors = getNeighbors(graph, currentNode);
+
+      neighbors.forEach(neighbor => {
+          if (closedSet.has(neighbor.row + "," + neighbor.col)) {
+              return;
+          }
+
+          // Calculate tentative distance from start node to neighbor
+          const tentativeDistance = currentNode.distance + 1; // Assuming each step has a cost of 1
+
+          // If tentative distance is less than neighbor's current distance, update it
+          if (tentativeDistance < neighbor.distance || !neighbor.distance) {
+              neighbor.distance = tentativeDistance;
+              neighbor.parent = currentNode;
+              if (!openSet.includes(neighbor)) {
+                  openSet.push(neighbor);
+              }
+          }
+      });
+  }
+
+  return []; // No path found
+}
+
 //#endregion
 
 //#region greedy best first search
